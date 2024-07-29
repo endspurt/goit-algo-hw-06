@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt
+import heapq
 
 # Створення графа з вагами ребер
 G = nx.Graph()
@@ -24,11 +25,47 @@ nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
 plt.title('Граф з вагами ребер')
 plt.show()
 
-# Виконання алгоритму Дейкстри для пошуку найкоротшого шляху з A до E
+# Реалізація алгоритму Дейкстри без використання готових рішень з бібліотеки
+def dijkstra(graph, start):
+    # Ініціалізація
+    queue = []
+    heapq.heappush(queue, (0, start))
+    distances = {node: float('inf') for node in graph.nodes}
+    distances[start] = 0
+    shortest_path_tree = {}
+    
+    while queue:
+        (current_distance, current_node) = heapq.heappop(queue)
+        
+        if current_distance > distances[current_node]:
+            continue
+        
+        for neighbor, weight in graph[current_node].items():
+            distance = current_distance + weight['weight']
+            
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                heapq.heappush(queue, (distance, neighbor))
+                shortest_path_tree[neighbor] = current_node
+    
+    return distances, shortest_path_tree
+
+# Застосування алгоритму Дейкстри для пошуку найкоротшого шляху з A до E
 start_node = 'A'
 goal_node = 'E'
-shortest_path = nx.dijkstra_path(G, start_node, goal_node)
-shortest_path_length = nx.dijkstra_path_length(G, start_node, goal_node)
+distances, shortest_path_tree = dijkstra(G, start_node)
+
+# Відновлення шляху з shortest_path_tree
+def get_shortest_path(tree, start, goal):
+    path = [goal]
+    while goal in tree:
+        goal = tree[goal]
+        path.append(goal)
+    path.reverse()
+    return path
+
+shortest_path = get_shortest_path(shortest_path_tree, start_node, goal_node)
+shortest_path_length = distances[goal_node]
 
 # Виведення результатів
 print(f"Найкоротший шлях з {start_node} до {goal_node}: {shortest_path}")
